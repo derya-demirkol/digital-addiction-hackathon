@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Off-Screen — Find Something Better To Do</title>
+<style>
+  :root{
+    --night: #1B2430;
+    --night-2: #232F40;
+    --paper: #EDE6D6;
+    --paper-2: #E3DAC5;
+    --moss: #6B8F71;
+    --moss-dark: #4F6B54;
+    --ink: #2A2620;
+    --clay: #B5502F;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    background: linear-gradient(180deg, var(--night) 0%, var(--night) 38%, var(--paper) 38%, var(--paper) 100%);
+    color: var(--ink);
+    min-height:100vh;
+  }
+  .hero{
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 64px 28px 40px;
+    text-align:center;
+  }
+  .eyebrow{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: #9FB3C8;
+    margin-bottom: 18px;
+  }
+  h1{
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.08;
+    margin: 0 0 14px;
+    color: #F4F0E6;
+    font-weight: 500;
+  }
+  h1 em{
+    font-style: italic;
+    color: #C9D8C4;
+  }
+  .sub{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #B8C4D0;
+    font-size: 15px;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .signal{
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    margin: 26px 0 4px;
+  }
+  .bar{
+    width:5px;
+    background: #3A4759;
+    border-radius: 2px;
+    transition: background 0.4s ease, opacity 0.4s ease;
+  }
+  .bar:nth-child(1){height:10px;}
+  .bar:nth-child(2){height:16px;}
+  .bar:nth-child(3){height:22px;}
+  .bar:nth-child(4){height:28px;}
+  .bar.lit{ background: var(--moss); }
+
+  main{
+    max-width: 640px;
+    margin: -10px auto 80px;
+    padding: 0 24px;
+  }
+
+  .card{
+    background: #FBF8F1;
+    border: 1px solid #D9CFB8;
+    border-radius: 3px;
+    padding: 36px 32px;
+    box-shadow: 0 18px 40px -22px rgba(27,36,48,0.35);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  label{
+    display:block;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--moss-dark);
+    margin: 30px 0 12px;
+    font-weight: 600;
+  }
+  .card > label:first-child{ margin-top:0; }
+
+  input[type=text], textarea, select{
+    width:100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 15px;
+    padding: 13px 14px;
+    border: 1px solid #CFC5AC;
+    background: #fff;
+    border-radius: 2px;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  textarea{ min-height: 68px; resize: vertical; }
+  input:focus, textarea:focus, select:focus{
+    outline: none;
+    border-color: var(--moss);
+    box-shadow: 0 0 0 3px rgba(107,143,113,0.18);
+  }
+
+  .row{ display:flex; gap:20px; margin-top: 4px; }
+  .row > div{ flex:1; }
+
+  button{
+    margin-top: 28px;
+    width:100%;
+    padding: 14px;
+    background: var(--moss-dark);
+    color: #F4F0E6;
+    border: none;
+    border-radius: 2px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14.5px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+  }
+  button:hover{ background: #435E48; }
+  button:active{ transform: scale(0.99); }
+  button:disabled{ background:#A8A296; cursor:not-allowed; }
+
+  .error{
+    margin-top:16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13.5px;
+    color: var(--clay);
+    background: #FBEAE2;
+    border: 1px solid #EAC3B2;
+    padding: 10px 14px;
+    border-radius: 2px;
+  }
+
+  #results{ margin-top: 28px; }
+  .result-title{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #9C9280;
+    margin: 0 0 14px;
+  }
+  .note{
+    background: #F4F0E4;
+    border-left: 3px solid var(--moss);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    border-radius: 0 2px 2px 0;
+    position: relative;
+  }
+  .note h3{
+    margin: 0 0 6px;
+    font-size: 17px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .note p{
+    margin: 0 0 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #48423A;
+  }
+  .note .meta{
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 11.5px;
+    color: var(--moss-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .why{
+    margin-top: 22px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 12.5px;
+    color: #8A8272;
+    line-height: 1.6;
+    border-top: 1px dashed #D9CFB8;
+    padding-top: 16px;
+  }
+
+  .spinner{
+    display:inline-block; width:14px; height:14px;
+    border: 2px solid rgba(244,240,230,0.4);
+    border-top-color: #F4F0E6;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: -2px;
+    margin-right: 8px;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  footer{
+    text-align:center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 11px;
+    color: #A79E88;
+    padding-bottom: 40px;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">Digital Well-Being · Prototype</div>
+  <h1>One habit<br><em>at a time.</em></h1>
+  <p class="sub">Tell us what you're trying to cut back on, how much time you've got, and what you're into — we'll find three real things to do instead.</p>
+  <div class="signal" id="signal">
+    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <label for="habit">What are you trying to cut back on?</label>
+    <input type="text" id="habit" placeholder="e.g. losing an hour to social media before bed">
+
+    <div class="row">
+      <div>
+        <label for="time">How much time do you have</label>
+        <select id="time">
+          <option>15 minutes</option>
+          <option selected>30 minutes</option>
+          <option>1 hour</option>
+          <option>2+ hours</option>
+        </select>
+      </div>
+      <div>
+        <label for="context">Where are you</label>
+        <select id="context">
+          <option>At home</option>
+          <option>Outside / open space</option>
+          <option>Commuting</option>
+          <option>Doesn't matter</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="interests">What are you into? (a few words is fine)</label>
+    <textarea id="interests" placeholder="e.g. music, drawing, walking, hanging out with friends"></textarea>
+
+    <button id="go">Show me something better to do</button>
+    <div id="err"></div>
+    <div id="results"></div>
+  </div>
+</main>
+
+<footer>This isn't medical advice — just a nudge toward something better to do with your hands and your attention.</footer>
+
+<script>
+const bars = document.querySelectorAll('.bar');
+function litBars(n){
+  bars.forEach((b,i)=> b.classList.toggle('lit', i < n));
+}
+
+const btn = document.getElementById('go');
+const errBox = document.getElementById('err');
+const resultsBox = document.getElementById('results');
+
+function fieldsFilled(){
+  const habit = document.getElementById('habit').value.trim();
+  const interests = document.getElementById('interests').value.trim();
+  let n = 1;
+  if(habit) n = 2;
+  if(habit && interests) n = 3;
+  if(habit && interests && document.getElementById('time').value) n = 4;
+  litBars(n);
+}
+['habit','interests'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', fieldsFilled);
+});
+document.getElementById('time').addEventListener('change', fieldsFilled);
+litBars(1);
+
+// Structured, step-by-step system prompt: asks the model to reason about
+// triggers first, then propose alternatives matched to time/interest/context,
+// and return strict JSON so the UI can render it reliably (structured output technique).
+const SYSTEM_PROMPT = `You are a digital well-being assistant. Your job is to suggest OFF-SCREEN activities that fit the user's interests, available time, and setting, in place of the digital habit they're trying to cut back on.
+
+Think step by step (but return only the JSON result):
+1. Infer the likely need behind the habit (boredom, escape, social connection, stimulation, etc.)
+2. Choose 3 different activities that realistically fit the given time and setting and could meet that need off-screen
+3. Write a short, warm, non-judgmental description for each (max 2 sentences) — write like a thoughtful friend, not a wellness brochure
+4. Do NOT use diagnostic language or call the user's behavior an "addiction"
+
+Rules:
+- Your entire reply must be a single valid JSON object and nothing else — no greeting, no explanation before or after, no markdown code fences (no \`\`\`)
+- The very first character of your reply must be "{" and the very last character must be "}"
+- Tone: warm, practical, never preachy
+- Be specific ("go outside" is weak; "take a 20-minute aimless walk to the park near you" is good)
+
+JSON schema:
+{
+  "activities": [
+    {"title": "short title", "description": "2-sentence description", "duration_fit": "how it fits the time given"}
+  ]
+}`;
+
+// A small set of closing lines. The first one is always shown on the very
+// first generation; after that, a different one is picked at random each
+// time (never repeating the line shown immediately before).
+const CLOSING_LINES = [
+  "Not a diagnosis — just a starting point.",
+  "No labels here, just options.",
+  "You don't need a diagnosis to try something different.",
+  "Take what's useful, skip the rest.",
+  "Small swap, not a verdict on you.",
+];
+let lastClosingLine = null;
+let hasGeneratedOnce = false;
+
+function nextClosingLine(){
+  if(!hasGeneratedOnce){
+    hasGeneratedOnce = true;
+    lastClosingLine = CLOSING_LINES[0];
+    return CLOSING_LINES[0];
+  }
+  const options = CLOSING_LINES.filter(l => l !== lastClosingLine);
+  const pick = options[Math.floor(Math.random() * options.length)];
+  lastClosingLine = pick;
+  return pick;
+}
+
+async function generate(){
+  errBox.innerHTML = '';
+  resultsBox.innerHTML = '';
+
+  const habit = document.getElementById('habit').value.trim();
+  const interests = document.getElementById('interests').value.trim();
+  const time = document.getElementById('time').value;
+  const context = document.getElementById('context').value;
+
+  if(!habit || !interests){
+    errBox.innerHTML = '<div class="error">Please fill in at least the habit and interests fields.</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Finding something for you…';
+
+  const userMessage = `Habit I want to cut back on: ${habit}
+Time available: ${time}
+Setting: ${context}
+My interests: ${interests}`;
+
+  try{
+    const parsed = await requestActivities(userMessage);
+
+    if(!parsed || !parsed.activities || !parsed.activities.length){
+      throw new Error("Couldn't come up with a good match. Try adding a bit more detail.");
+    }
+
+    resultsBox.innerHTML = '<p class="result-title">Three things you could do instead</p>' +
+      parsed.activities.map(a => `
+        <div class="note">
+          <h3>${escapeHtml(a.title || '')}</h3>
+          <p>${escapeHtml(a.description || '')}</p>
+          <div class="meta">${escapeHtml(a.duration_fit || '')}</div>
+        </div>
+      `).join('') +
+      `<div class="why">These were picked based on what's probably driving "${escapeHtml(habit)}", sized to fit ${escapeHtml(time)} while you're ${escapeHtml(context.toLowerCase())}. ${nextClosingLine()}</div>`;
+
+  }catch(err){
+    errBox.innerHTML = '<div class="error">' + escapeHtml(err.message || 'Something went wrong — give it another try.') + '</div>';
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = 'Show me something better to do';
+  }
+}
+
+// Calls the API and tries to get back a parsed {activities:[...]} object.
+// If the model's reply isn't valid JSON, retries up to 2 more times with
+// an increasingly firm reminder, then — instead of ever showing a hard
+// error mid-demo — falls back to wrapping whatever text it did return
+// into a single readable card so the UI never just breaks.
+async function requestActivities(userMessage, attempt = 1){
+  const MAX_ATTEMPTS = 3;
+  const reminder = attempt === 1
+    ? ""
+    : "\n\nReminder: reply with ONLY a single valid JSON object, starting with { and ending with }. No other text.";
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      temperature: 0.4,
+      system: SYSTEM_PROMPT,
+      messages: [
+        { role: "user", content: userMessage + reminder }
+      ]
+    })
+  });
+
+  if(!response.ok){
+    let detail = "";
+    try{ const errBody = await response.json(); detail = errBody?.error?.message || ""; }catch(e){}
+    throw new Error("The request didn't go through (" + response.status + (detail ? ": " + detail : "") + ")");
+  }
+
+  const data = await response.json();
+  if(data.error){
+    throw new Error(data.error.message || "The API returned an error.");
+  }
+  if(!data.content || !Array.isArray(data.content)){
+    throw new Error("Unexpected response shape from the model.");
+  }
+  const textBlock = data.content.find(b => b.type === "text");
+  if(!textBlock){ throw new Error("Didn't get a text response back from the model."); }
+
+  const rawText = textBlock.text.trim();
+  const start = rawText.indexOf('{');
+  const end = rawText.lastIndexOf('}');
+
+  if(start !== -1 && end !== -1 && end > start){
+    try{
+      return JSON.parse(rawText.slice(start, end + 1));
+    }catch(e){
+      console.warn("Attempt " + attempt + " parse failed:", e.message, rawText);
+    }
+  } else {
+    console.warn("Attempt " + attempt + " had no JSON braces:", rawText);
+  }
+
+  if(attempt < MAX_ATTEMPTS){
+    return requestActivities(userMessage, attempt + 1);
+  }
+
+  // Final fallback: never show a dead-end error during a demo. Wrap
+  // whatever text came back into a single card so there's still a result.
+  console.error("Giving up on JSON after " + MAX_ATTEMPTS + " attempts. Raw text:", rawText);
+  return {
+    activities: [{
+      title: "Here's what came back",
+      description: rawText.slice(0, 400) || "The model didn't return usable suggestions this time.",
+      duration_fit: ""
+    }]
+  };
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.innerText = str;
+  return d.innerHTML;
+}
+
+btn.addEventListener('click', generate);
+</script>
+</body>
+</html>
